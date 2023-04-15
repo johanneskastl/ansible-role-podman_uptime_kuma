@@ -7,9 +7,9 @@
     state: true
     persistent: true
 
-- name: 'Create directory /opt/uptime-kuma_Podman'
+- name: "Create directory {{ uptime_kuma_data_directory }}"
   ansible.builtin.file:
-    path: '/opt/uptime-kuma_Podman'
+    path: "{{ uptime_kuma_data_directory }}"
     state: 'directory'
     owner: 'root'
     group: 'root'
@@ -23,7 +23,7 @@
     publish:
       - '3001:3001/tcp'
     volume:
-      - '/opt/uptime-kuma_Podman/:/app/data:z'
+      - "{{ uptime_kuma_data_directory }}/:/app/data:z"
     labels:
       PODMAN_SYSTEMD_UNIT: container-uptime-kuma
       io.containers.autoupdate: registry
