@@ -1,0 +1,50 @@
+---
+# podman_uptime_kuma/tasks/main.yml
+
+- name: 'Manage podman SELinux Booleans'
+  ansible.posix.seboolean:
+    name: 'container_connect_any'
+    state: true
+    persistent: true
+
+- name: 'Create directory /opt/uptime-kuma_Podman'
+  ansible.builtin.file:
+    path: '/opt/uptime-kuma_Podman'
+    state: 'directory'
+    owner: 'root'
+    group: 'root'
+    mode: '0755'
+
+- name: 'Create and start rootful uptime-kuma container'
+  containers.podman.podman_container:
+    name: 'uptime-kuma'
+    image: "{{ uptime_kuma_image }}"
+    state: 'started'
+    publish:
+      - '3001:3001/tcp'
+    volume:
+      - '/opt/uptime-kuma_Podman/:/app/data:z'
+    labels:
+      PODMAN_SYSTEMD_UNIT: container-uptime-kuma
+      io.containers.autoupdate: registry
+    generate_systemd:
+      path: '/etc/systemd/system'
+      new: true
+
+- name: 'Start the container-uptime-kuma.service service'
+  ansible.builtin.service:
+    name: 'container-uptime-kuma.service'
+    state: started
+    daemon_reload: true
+
+- name: 'Enable the container-uptime-kuma.service service'
+  ansible.builtin.service:
+    name: 'container-uptime-kuma.service'
+    enabled: true
+
+- name: 'Enable the podman-auto-update.timer'
+  ansible.builtin.service:
+    name: 'podman-auto-update.timer'
+    enabled: true
+  when:
+    - enable_podman_auto_updates_timer | bool
